@@ -1,0 +1,165 @@
+<title>gamer</title>
+<link rel="icon" href="fuckibg.webp">
+<style>
+	body {
+		margin: 0px;
+		background: black;
+	}
+	#x {
+		display: none;
+	}
+</style>
+<img src="fuckibg.webp" id="x">
+<canvas id="f"></canvas>
+<script defer>
+	function line(start, end, color, width){
+		if(color)
+			_.strokeStyle = color;
+		if(width)
+			_.lineWidth = width;
+	
+		_.beginPath();
+		_.moveTo(start.x, start.y);
+		_.lineTo(end.x, end.y);
+		_.stroke();
+	}
+	function point(pos, color, radius){
+		if(color)
+			_.fillStyle = color;
+	
+		_.beginPath();
+		_.arc(pos.x, pos.y, radius ?? 4, 0, Math.PI * 2);
+		_.fill();
+	}
+	class V {
+		constructor(x, y){
+			var xisvec = x.constructor.name == 'V';
+			this.x = xisvec ? x.x : x;
+			this.y = xisvec ? x.y : y;
+		}
+
+		format(x, y){
+			if(x.constructor.name == 'V')
+				return new V(x.x, x.y);
+			else if(y==undefined)
+				return new V(x, x);
+			else
+				return new V(x, y);
+		}
+
+		add(x, y){
+			var a = this.format(x, y);
+			this.x += a.x;
+			this.y += a.y;
+			return this;
+		}
+
+		sub(x, y){
+			var a = this.format(x, y);
+			this.x -= a.x;
+			this.y -= a.y;
+			return this;
+		}
+		
+		mul(x, y){
+			var a = this.format(x, y);
+			this.x *= a.x;
+			this.y *= a.y;
+			return this;
+		}
+
+		div(x, y){
+			var a = this.format(x, y);
+			if(a.x != 0)
+				this.x /= a.x;
+			if(a.y != 0)
+				this.y /= a.y;
+			return this;
+		}
+
+		norm(){
+			var d = this.mag;
+			this.div(d, d);
+			return this;
+		}
+		
+		get mag(){
+			return Math.sqrt(this.x * this.x + this.y * this.y);
+		}
+		
+		get head(){
+			return R2D * Math.atan2(this.x, this.y);
+		}
+	}
+	
+	var c   = document.querySelector('#f');
+	var IMG = document.querySelector('#x');
+	var _ = c.getContext('2d');
+	var t = Date.now();
+	f=()=>i=setInterval(()=>{
+		WIDTH = c.width  = innerWidth ;
+		HEIGHT = c.height = innerHeight;
+		var dt = (Date.now()-t);
+		t = Date.now();
+		loop(dt);
+	}, 1000 / 30);
+	//onpageshow=f;
+	//onpagehide=()=>clearInterval(i);
+	input = { 
+		k: {},
+		m: {
+			x: 0,
+			y: 0,
+		}
+	}
+
+	window.addEventListener('keydown', function(event){
+		if(!((event.key == 'I' && event.ctrlKey) || event.key == 'F12'))
+			event.preventDefault();
+		input.k[event.key] = true;
+	});
+	window.addEventListener('keyup', function(event){
+		event.preventDefault();
+		input.k[event.key] = false;
+	});
+	window.addEventListener('mousemove', function(event){
+		event.preventDefault();
+		input.m.x = event.clientX;
+		input.m.y = event.clientY;
+	});
+	window.addEventListener('mousedown', function(event){
+		event.preventDefault();
+		input.m['lmr'[event.button]] = true;
+	});
+	window.addEventListener('mouseup', function(event){
+		event.preventDefault();
+		input.m['lmr'[event.button]] = false;
+	});
+	window.addEventListener('contextmenu', function(event){
+		event.preventDefault();
+	});
+
+	log = (...a) => console.log.apply(null, a);
+
+	D2R = Math.PI / 180;
+	R2D = 180 / Math.PI;
+
+	function p2c(t,r){
+		return new V(
+			Math.cos(t * D2R) * r,
+			Math.sin(t * D2R) * r
+		);
+	}
+
+	randv = () => {
+		return new V(
+			Math.random() * 2 - 1,
+			Math.random() * 2 - 1
+		)
+	}
+</script>
+<script src="game.js"></script>
+<script defer>
+	start();
+	f();
+</script>
