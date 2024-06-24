@@ -5,11 +5,12 @@
 		margin: 0px;
 		background: black;
 	}
-	#x {
+	#x, #y {
 		display: none;
 	}
 </style>
 <img src="fuckibg.webp" id="x">
+<img src="mood.gif"     id="y">
 <canvas id="f"></canvas>
 <script defer>
 	function line(start, end, color, width){
@@ -92,8 +93,9 @@
 		}
 	}
 
-	var c   = document.querySelector('#f');
-	var IMG = document.querySelector('#x');
+	var c    = document.querySelector('#f');
+	var IMG  = document.querySelector('#x');
+	var IMG2 = document.querySelector('#y');
 	var _ = c.getContext('2d');
 	var t = Date.now();
 	f=()=>i=setInterval(()=>{
