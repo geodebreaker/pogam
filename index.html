@@ -93,20 +93,26 @@
 		}
 	}
 
+	var FPS = 30;
 	var c    = document.querySelector('#f');
 	var IMG  = document.querySelector('#x');
 	var IMG2 = document.querySelector('#y');
 	var _ = c.getContext('2d');
+  _.globalCompositeOperation = 'source-atop';
 	var t = Date.now();
-	f=()=>i=setInterval(()=>{
+	f=()=>interval=setInterval(()=>{
 		WIDTH = c.width  = innerWidth ;
 		HEIGHT = c.height = innerHeight;
-		var dt = (Date.now()-t);
+		var dt = (Date.now()-t) / 1000;
 		t = Date.now();
-		loop(dt);
+		loop(dt * FPS);
 	}, 1000 / 30);
 	//onpageshow=f;
-	//onpagehide=()=>clearInterval(i);
+	addEventListener('error', e=>{
+		if(window.interval){
+			clearInterval(interval);
+		}
+	});
 	input = { 
 		k: {},
 		m: {
