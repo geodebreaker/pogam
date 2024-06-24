@@ -17,7 +17,7 @@
 			_.strokeStyle = color;
 		if(width)
 			_.lineWidth = width;
-	
+
 		_.beginPath();
 		_.moveTo(start.x, start.y);
 		_.lineTo(end.x, end.y);
@@ -26,7 +26,7 @@
 	function point(pos, color, radius){
 		if(color)
 			_.fillStyle = color;
-	
+
 		_.beginPath();
 		_.arc(pos.x, pos.y, radius ?? 4, 0, Math.PI * 2);
 		_.fill();
@@ -60,7 +60,7 @@
 			this.y -= a.y;
 			return this;
 		}
-		
+
 		mul(x, y){
 			var a = this.format(x, y);
 			this.x *= a.x;
@@ -82,16 +82,16 @@
 			this.div(d, d);
 			return this;
 		}
-		
+
 		get mag(){
 			return Math.sqrt(this.x * this.x + this.y * this.y);
 		}
-		
+
 		get head(){
 			return R2D * Math.atan2(this.x, this.y);
 		}
 	}
-	
+
 	var c   = document.querySelector('#f');
 	var IMG = document.querySelector('#x');
 	var _ = c.getContext('2d');
@@ -163,3 +163,9 @@
 	start();
 	f();
 </script>
+<!-- Open Graph meta tags -->
+<meta property="og:title" content="crappy goober" />
+<meta property="og:description" content="OMG MH REAL?!!1!" />
+<meta property="og:image" content="fuckibg.webp" />
+<meta property="og:url" content="./" />
+<meta property="og:type" content="website" />
