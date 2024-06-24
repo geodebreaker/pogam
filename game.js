@@ -7,18 +7,25 @@ var p;
 
 function start(){
 	w = new world();
-	for(var i = 0; i < 5; i++){
-		w.addWall(new bound(
-			randv().add(1).mul(300), 
-			randv().add(1).mul(300)));
+	for(var i = 0; i < 10; i++){
+		w.addobj(
+			new obj(
+				randv().add(1).mul(300), 
+				randv().add(1).mul(300),
+				IMG2,
+				1
+		));
 	}
+	w.addobj(new obj(new V(-1,   -1), new V(-1, 601), IMG, 2));
+	w.addobj(new obj(new V(-1,   -1), new V(601, -1), IMG, 2));
+	w.addobj(new obj(new V(601, 601), new V(-1, 601), IMG, 2));
+	w.addobj(new obj(new V(601, 601), new V(601, -1), IMG, 2));
 	p = new player(new V(100, 125), -30);
 }
 
 function loop(dt){
 	p.input(w);
 	p.render(w);
-	//p.d += Math.random * 10 - 5;
 }
 
 ////////
@@ -44,7 +51,7 @@ class player {
 									(input.k.s ?? 0))) * SPEED);
 		var hit = false;
 		for(var j = 0; j < w.w.length; j++){
-			var cast = raycast(this.p, new V(m).norm(), w.w[j]);
+			var cast = raycast(this.p, new V(m).norm(), w.w[j].b);
 			if(cast[0] && cast[2] < m.mag){
 				hit = true;
 				break;
@@ -63,7 +70,7 @@ class player {
 			var c = [Infinity, 0, 0];
 			var z = [new V(0, 0), 0, 0];
 			for(var j = 0; j < w.w.length; j++){
-				var cast = raycast(this.p, k, w.w[j]);
+				var cast = raycast(this.p, k, w.w[j].b);
 				if(cast[0] && cast[2] * m < c[0]){
 					c = [cast[2] * m, cast[0], cast[1], cast[2], j];	
 					//screen distance, pos, t, actual distance, object index
@@ -82,13 +89,13 @@ class player {
 				log(z, y)
 			y = Math.floor(y).toString(16);
 			y = y.length == 1 ? '0' + y : y;
-			
+
 			_.fillStyle = "black";
 			_.fillStyle = '#' + y.repeat(3);
 
 			//_.fillRect(i*WIDTH/QUALITY/2, 300 - x, WIDTH/QUALITY/2+1, x * 2)
 			_.drawImage(
-				IMG,                // Source image
+				w.w[hl[i][4]].t,                // Source image
 				hl[i][2]*IMG.width, 0,          // Source x, y
 				1, IMG.height,  // Source width, height
 				i*WIDTH/QUALITY/2, 300 - x,               // Destination x, y
@@ -102,7 +109,7 @@ class player {
 				line(this.p, k.mul(10000).add(this.p), "blue", 1);
 			}
 			for(var i = 0; i < w.w.length; i++){
-				var b = w.w[i];
+				var b = w.w[i].b;
 				line(b.a, b.b, "green", 5);
 			}
 			line(p.p, 
@@ -117,8 +124,16 @@ class world {
 		this.w = [];
 	}
 
-	addWall(b){
-		this.w.push(b);
+	addobj(o){
+		this.w.push(o);
+	}
+}
+
+class obj {
+	constructor(a, b, t, h){
+		this.b = new bound(a, b);
+		this.t = t;
+		this.h = h;
 	}
 }
 
@@ -136,7 +151,7 @@ class bound {
 function raycast(pos, dir, wall){
 	var newdir = new V(dir);
 	newdir.norm();
-	
+
 	var x1 = wall.a.x;
 	var y1 = wall.a.y;
 	var x2 = wall.b.x;
