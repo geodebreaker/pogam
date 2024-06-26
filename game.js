@@ -41,13 +41,18 @@ function start(){ //run at start
 	A = new asset(IMGSH, 'sd', [A_ID,[['oof',10]]]);
 
 	w = new world(); //make a world
-	p = new player(new V(100, 125), -30); //make player
-	for(var i = 0; i < 3; i++){ //add 10 objects to world
+	p = new player(new V(150, 10), 90); //make player
+	var x = [
+		100, 100, 	100, 400,
+		100, 400, 	200, 400,
+		200, 400, 	200, 100,
+	];
+	for(var i = 0; i < 12; i+=4){ //add 3 objects to world
 		w.addobj(
 			new obj(
 				'in wall',
-				randv().add(1).mul(400), //random position
-				randv().add(1).mul(400),  
+				new V(x[i]  ,x[i+1]),
+				new V(x[i+2],x[i+3]),
 				true, //wall
 				"mood" //mood
 			));
@@ -59,32 +64,40 @@ function start(){ //run at start
 	
 	w.addobj(new obj('out wall', new V(600, 600), new V(700, 700), true, "dong"));
 	
-	w.addobj(new obj('trigger test', new V(100, 400), new V(400, 100), true, "TRIGGER", 
+	w.addobj(new obj('trigger test', new V(100, 150), new V(200, 150), true, "TRIGGER", 
 									 true, true)).
-		onhit=x=>p.damage(10);
+		onhit=x=>{
+			//p.damage(90);
+			w.addobj(new obj('in wall', new V(200, 300), new V(100, 300), true, "fuckibg"));
+			w.addobj(new obj('crap obj', new V(200, 280), new V(100, 280), true, "crap", true));
+			w.addobj(new obj('in wall', new V(100, 100), new V(200, 100), true, "fuckibg"));
+			w.w.splice(w.tag('goober'), 1);
+			killInterval = setInterval(()=>{
+				if(p.dead)
+					clearInterval(killInterval)
+				else
+					p.damage(10)
+			}, 500);
+		};
 
-	w.addobj(new obj('med obj',new V(300, 300), 4 * 3, false, "med", true, true, 0.3, true)).
-		onhit=x=>{w.w.splice(w.tag('med obj'), 1);p.heal(10)};
+	w.addobj(new obj('med obj',new V(150, 350), 4 * 3, false, "med", true, true, 0.3, true)).
+		onhit=x=>{w.w.splice(w.tag('med obj'), 1); p.heal(100, 1)};
 
-	mkpalette(500, 500);
-	/**/text('goober', 10, 0, 'white', 15, "black", 2);
-	mkpdone('goober', A);
+	A.mkpalette(700, 700);
+	/**/text('walk through here', 0, 60, 'white', 60, "black", 3);
+	/**/text('for a funny', 0, 120, 'white', 60, "black", 3);
+	A.mkpdone('goober');
 	
-	w.addobj(new obj('goober obj',new V(300, 100), 100, false, "goober", true, true, 0.5, true)).
-		onhit=x=>p.p.sub(1000);
-
-
-	mkpalette(500, 500);
+	A.mkpalette(700, 700);
+	/**/text('haha die lol', 0, 400, 'white', 60, "black", 3);
+	A.mkpdone('crap');
+	
+	w.addobj(new obj('goober obj',new V(140, 110), 60, false, "goober", true, true, 1, true));
+	
+	A.mkpalette(500, 500);
 	/**/rect(0, 0, 500, 500, '#ff08');
 	/**/text('TRIGGER', 120, 200, '#f00', 60);
-	mkpdone('TRIGGER', A);
-	A.palettestate('TRIGGER', true);
-
-	mkpalette(500, 500);
-	/**/rect(0, 	0, 500, 500, '#000');
-	/**/rect(250, 0, 250, 250, '#f0f');
-	/**/rect(0, 250, 250, 250, '#f0f');
-	mkpdone('FALLBACK', A);
+	A.mkpdone('TRIGGER', false);
 }
 
 function loop(dt){ //loop each frame
@@ -100,11 +113,12 @@ function loop(dt){ //loop each frame
 
 class asset {
 	constructor(i, a, d){
+		this.palette = {};
 		this.i = i;
 		this.a = a;
 		this.parsedata(d);
 		this.genimgs();
-		this.palette = {};
+		this.genpalette();
 	}
 
 	parsedata(data){
@@ -139,9 +153,22 @@ class asset {
 		}
 	}
 
+	genpalette(){
+		this.mkpalette(500, 500);
+		/**/rect(0, 	0, 500, 500, '#000');
+		/**/rect(250, 0, 250, 250, '#f0f');
+		/**/rect(0, 250, 250, 250, '#f0f');
+		this.mkpdone('FALLBACK');
+	
+		this.mkpalette(500, 500);
+		this.mkpdone('EMPTY');
+	}
+
 	image(name){
 		return this.imgs[name]??
-			(this.palette[name]?(this.palette[name].s?this.palette[name].i:null):null)
+			(this.palette[name]?
+			 (this.palette[name].s?this.palette[name].i:this.palette.EMPTY.i)
+			 :null)
 			??this.palette.FALLBACK.i;
 	}
 
@@ -152,12 +179,23 @@ class asset {
 		a.setTimeout(a.stop, this.d.a[name].e);
 	}
 
-	savepalette(name, data){
-		this.palette[name] = {i:data,s:true};
-	}
-
 	palettestate(name, state){
 		this.palette[name].s = state;
+	}
+	
+	mkpalette(w, h){
+		this.newpalette = document.createElement('canvas');
+		this.newpalette.width = w;
+		this.newpalette.height = h;
+		this._ = _
+		_ = this.newpalette.getContext('2d');
+		_.save();
+	}
+	
+	mkpdone(name, state=true){
+		_.restore();
+		_ = this._;
+		this.palette[name] = {i:this.newpalette,s:state};
 	}
 }
 
@@ -206,12 +244,11 @@ class player { //player
 			input.k['~']=input.k.shift=input.k.control=0;
 		}
 
-		if(this.dmging > 0 || this.dmging < 0){
-			if(this.dmging < 10){
-				this.dmging += dt;
-			}else{
-				this.dmging = 0;
-			}
+		if(this.dmging > 0){
+			this.dmging -= 1;
+		}
+		if(this.dmging < 0){
+			this.dmging += 1;
 		}
 		
 		var mm = new V(input.m.x, input.m.y).sub(this.om).mul(input.m.lock);
@@ -226,7 +263,7 @@ class player { //player
 			-JUMPGRAV * (!NOCLIP);
 		this.vy -= SHIFT * JUMPGRAV * 4 * (!NOCLIP);
 		this.y += this.vy * (!NOCLIP);
-		var v = SHIFT * -50 - this.dead * 200;
+		var v = SHIFT * -50 - this.dead * 500;
 		if(this.y < v){
 			this.vy = NOCLIP?0:(this.y = v);
 		}
@@ -386,11 +423,11 @@ class player { //player
 
 		//DAMAGE
 		if(this.dmging > 0)
-			rect(0, 0, WIDTH, HEIGHT, 'rgba(255, 0, 0, '+(1-this.dmging/10)+')')
+			rect(0, 0, WIDTH, HEIGHT, 'rgba(255, 0, 0, '+(this.dmging/15)+')')
 		if(this.dmging < 0)
-			rect(0, 0, WIDTH, HEIGHT, 'rgba(0, 255, 0, '+(0-this.dmging/10)+')')
+			rect(0, 0, WIDTH, HEIGHT, 'rgba(0, 255, 0, '+(0-this.dmging/15)+')')
 		if(this.dead)
-			rect(0, 0, WIDTH, HEIGHT, 'rgba(255, 0, 0, 0.3)');
+			rect(0, 0, WIDTH, HEIGHT, 'rgba(255, 0, 0, 0.5)');
 
 		//MINIMAP / DEBUG
 		if(input.k['='] || input.k['+'] || DBLOCK == 2){ //if enter
@@ -470,8 +507,8 @@ class player { //player
 		text(this.guns[this.curgun].resammo, X, Y-30, "white", 20);
 
 		//HP DISPLAY
-		var X = WIDTH*(3/4)+140;
-		var Y = HEIGHT-170;
+		var X = WIDTH*(3/4)+160;
+		var Y = HEIGHT-130;
 		var H = this.maxhp / 100 * this.hp; 
 		var T = this.hp+'/'+this.maxhp;
 		_.font = '15px monospace';
@@ -494,6 +531,9 @@ class player { //player
 
 	debug(){
 		debug('PLAYER');
+		/**/debug('hp', this.hp);
+		/**/debug('max hp', this.maxhp);
+		/**/debug('dead', this.dead);
 		/**/debug('pos', this.p);
 		/**/debug('vel', this.v);
 		/**/debug('y', this.y);
@@ -743,7 +783,7 @@ function resetdebug(){
 function ENVP(){
 	document.exitPointerLock();
 	var x = prompt('enter command (variable and value to set or to trigger).\n'+
-								 'available triggers:\n- '+ENVVAR.join('\n- ')+'\n'+
+								 'available triggers:\n- '+ENVTRIG.join('\n- ')+'\n'+
 								 'available variables:\n- '+ENVVAR.join('\n- '));
 
 	if(!x)
@@ -762,20 +802,6 @@ function ENVP(){
 		y = y.join(' ');
 		eval('x=>'+x+'=x')(y)
 	}catch(e){return alert('failed: '+e)}
-}
-function mkpalette(w, h){
-	newpalette = document.createElement('canvas');
-	newpalette.width = w;
-	newpalette.height = h;
-	_2 = _
-	_ = newpalette.getContext('2d');
-	_.save();
-	//_.transform(20, 0, 0, 1, 0, 0);
-}
-function mkpdone(name, A){
-	_.restore();
-	_ = _2;
-	A.savepalette(name, newpalette);
 }
 function SHOWTGR(x){
 	A.palette.TRIGGER.s = x;
