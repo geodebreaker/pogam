@@ -1,18 +1,115 @@
 <title>gamer</title>
-<link rel="icon" href="fuckibg.webp">
+<link rel="icon" href="fuckibgtransparent.png">
 <style>
 	body {
 		margin: 0px;
 		background: black;
 	}
-	#x, #y {
+	#x {
 		display: none;
 	}
+	#hide-cursor {
+		cursor: none;
+	}
+	#p {
+		margin: 0px;
+		position: absolute;
+		left: 10vw;
+		width: calc(80vw - 20px);
+		top: 10vh;
+		height: calc(80vh - 20px);
+		padding: 10px;
+		border: none;
+		border-radius: 20px;
+		background: #222;
+		font-family: monospace;
+		font-size: 20px;
+		color: white;
+	}
+	#lc {
+		display: block;
+		position: fixed;
+		bottom: calc(10vh + 10px);
+		height: 5vh;
+		width: inherit;
+		border-radius: 10px;
+		background-color: #444;
+		text-align: center;
+	}
+	#pb	{
+		margin: 3px;
+		border: 4px solid #666;
+		background: #222;
+		font-weight: bold;
+		border-radius: 10px;
+		display: none;
+		user-select: none;
+		cursor: pointer;
+		padding: 2px;
+	}
+	#l {
+		display: block;
+		position: fixed;
+		bottom: calc(10vh + 10px);
+		height: 5vh;
+		border-radius: 10px;
+		background-image: url('load.svg');
+	}
+	#p::backdrop {
+		background: #444;
+	}
+	h3 {
+		padding: 10px;
+		padding-bottom: 0px;
+		margin-top: 0px;
+	}
 </style>
-<img src="fuckibg.webp" id="x">
-<img src="mood.gif"     id="y">
+<img src="imgsheet.png" id="x">
 <canvas id="f"></canvas>
+<div popover="manual" id="p">
+	<h3>GOOBER GAME</h3>
+	<ul>
+		<li>use WASD or arrow keys for movement</li>
+		<li>use shift to crouch and space to jump</li>
+		<li>use z or left click to shoot</li>
+		<li>use x or right click to reload</li>
+		<li>use - and + for menus</li>
+		<li>dbl click - and + to lock menus</li>
+		<li>use CTRL + SHIFT + ` to use the dev console</li>
+	</ul>
+	<div id="lc"><div id="l"></div><div onclick="f()" id="pb">PLAY</div></div>
+</div>
 <script defer>
+	function img(a, name, t1, t2, o){
+		_.save();
+		_.globalAlpha = o;
+		_.drawImage(
+			a.image(name),
+			t1[0], t1[1], t1[2], t1[3], 
+			t2[0], t2[1], t2[2], t2[3]
+		);
+		_.restore(); 
+	}
+	function text(t, x, y, color, size, scolor, width){
+		if(color)
+			_.fillStyle = color;
+		
+		_.font = (size ?? 15) + "px monospace";
+		
+		if(scolor){
+			_.strokeStyle = scolor;
+			_.lineWidth = width ?? 1;
+			_.strokeText(t, x, y + (size ?? 15));
+		}
+
+		_.fillText(t, x, y + (size ?? 15));
+	}
+	function rect(x, y, h, w, color){
+		if(color)
+			_.fillStyle = color;
+
+		_.fillRect(x, y, h, w);
+	}
 	function line(start, end, color, width){
 		if(color)
 			_.strokeStyle = color;
@@ -94,19 +191,35 @@
 	}
 
 	var FPS = 30;
-	var c    = document.querySelector('#f');
-	var IMG  = document.querySelector('#x');
-	var IMG2 = document.querySelector('#y');
+	var c     = document.querySelector('#f');
+	var IMGSH = document.querySelector('#x');
 	var _ = c.getContext('2d');
-  _.globalCompositeOperation = 'source-atop';
+	var P = document.querySelector('#p');
+	var LOAD = 0;
+	var MAXLOAD = 2;
+	var SETLOAD = () => {
+		document.querySelector('#l').style.width = (++LOAD)/MAXLOAD* +
+			document.querySelector('#lc').getBoundingClientRect().width+ 'px';
+		if(LOAD == MAXLOAD)
+			LOADDONE();
+	};
+	var LOADDONE = () => {
+		if(SKIPMENU == true)
+			f();
+		document.querySelector('#l').style.display = 'none';
+		document.querySelector('#pb').style.display = 'inline-block';
+	}
+	P.showPopover();
+	_.globalCompositeOperation = 'source-atop';
+	_.imageSmoothingEnabled = false;
 	var t = Date.now();
-	f=()=>interval=setInterval(()=>{
-		WIDTH = c.width  = innerWidth ;
+	f=()=>{start();P.hidePopover();interval=setInterval(()=>{
+		WIDTH  = c.width  = innerWidth ;
 		HEIGHT = c.height = innerHeight;
 		var dt = (Date.now()-t) / 1000;
 		t = Date.now();
 		loop(dt * FPS);
-	}, 1000 / 30);
+	}, 1000 / 30)};
 	//onpageshow=f;
 	addEventListener('error', e=>{
 		if(window.interval){
@@ -114,30 +227,47 @@
 		}
 	});
 	input = { 
-		k: {},
+		k: {
+			LAST: null,
+			TIME: Date.now(),
+			DBL: false
+		},
 		m: {
 			x: 0,
 			y: 0,
+			lock: false,
+			canlock: false
 		}
 	}
 
 	window.addEventListener('keydown', function(event){
 		if(!((event.key == 'I' && event.ctrlKey) || event.key == 'F12'))
 			event.preventDefault();
-		input.k[event.key] = true;
+		input.k.DBL = 
+			input.k.LAST == event.key.toLowerCase() &&
+			Date.now() - input.k.TIME < 700;
+		input.k.LAST = event.key.toLowerCase();
+		input.k.TIME = Date.now();
+		input.k[event.key.toLowerCase()] = true;
 	});
 	window.addEventListener('keyup', function(event){
 		event.preventDefault();
-		input.k[event.key] = false;
+		input.k[event.key.toLowerCase()] = false;
 	});
 	window.addEventListener('mousemove', function(event){
 		event.preventDefault();
-		input.m.x = event.clientX;
-		input.m.y = event.clientY;
+		if(input.m.lock){
+			input.m.x += event.movementX;
+			input.m.y += event.movementY;
+		}else{
+			input.m.x = event.clientX;
+			input.m.y = event.clientY;
+		}
 	});
 	window.addEventListener('mousedown', function(event){
 		event.preventDefault();
-		input.m['lmr'[event.button]] = true;
+		if(input.m.lock || !input.m.canlock)
+			input.m['lmr'[event.button]] = true;
 	});
 	window.addEventListener('mouseup', function(event){
 		event.preventDefault();
@@ -145,6 +275,27 @@
 	});
 	window.addEventListener('contextmenu', function(event){
 		event.preventDefault();
+	});
+
+	document.addEventListener('click', event => {
+		if(!input.m.lock && input.m.canlock){
+			event.stopPropagation();
+			event.preventDefault();
+			document.body.requestPointerLock();
+		}
+	});
+
+	document.addEventListener('pointerlockchange', ()=>{
+		input.m.lock = document.pointerLockElement == document.body;
+		if(input.m.lock){
+			document.body.id = 'hide-cursor';
+		}else{
+			document.body.id = '';
+		}
+	});
+
+	document.addEventListener('pointerlockerror', ()=>{
+		console.error('Pointer lock error');
 	});
 
 	log = (...a) => console.log.apply(null, a);
@@ -167,9 +318,13 @@
 	}
 </script>
 <script src="game.js"></script>
-<script defer>
-	start();
-	f();
+<script>
+	document.onreadystatechange=()=>{
+		if(document.readyState == "complete"){
+			SETLOAD();
+			setTimeout(SETLOAD, 500);
+		}
+	};
 </script>
 <!-- Open Graph meta tags -->
 <meta property="og:title" content="crappy goober" />
